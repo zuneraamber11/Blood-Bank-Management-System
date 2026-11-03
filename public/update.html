@@ -1,0 +1,263 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Record | Blood Bank</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+    <a class="brand" href="index.html">♥ Blood Bank
+        <small>MANAGEMENT SYSTEM</small>
+    </a>
+    <div class="navlinks">
+        <a href="index.html">Home</a>
+        <a href="insert.html">Add Record</a>
+        <a href="list.html">View Records</a>
+        <a href="listOne.html">Search</a>
+        <a href="update.html">Update</a>
+        <a href="delete.html">Delete</a>
+    </div>
+</nav>
+
+<main>
+    <section class="hero">
+        <div>
+            <div class="eyebrow">Accurate records, better care</div>
+            <h1>Update Record</h1>
+            <p>Select an existing record to automatically load its details and make changes.</p>
+        </div>
+        <img src="images/update-banner.jpg" alt="Blood sample in a laboratory">
+    </section>
+
+    <section class="panel">
+        <h2>Edit Information</h2>
+        <p class="hint">Choose the record type and select a record from the database.</p>
+
+        <form id="recordForm">
+            <div class="field">
+                <label for="table">Record Type</label>
+                <select id="table">
+                    <option value="donors">Donor</option>
+                    <option value="blood-stock">Blood Stock</option>
+                    <option value="blood-requests">Blood Request</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="recordId">Select Existing Record</label>
+                <select id="recordId" required>
+                    <option value="">Loading records...</option>
+                </select>
+            </div>
+
+            <div id="fields" class="grid"></div>
+
+            <div class="actions">
+                <button class="btn primary" type="submit">✎ Update Record</button>
+                <button class="btn secondary" type="button" id="reload">Reload Records</button>
+            </div>
+            <div id="status" class="status"></div>
+        </form>
+    </section>
+</main>
+
+<footer class="footer">Blood Bank Management System · Because every drop counts</footer>
+
+<script>
+const schemas = {
+    donors: {
+        endpoint: "/donors",
+        id: "donor_id",
+        fields: [
+            ["name", "Donor Name", "text"],
+            ["age", "Age", "number"],
+            ["gender", "Gender", "select", ["Male", "Female", "Other"]],
+            ["blood_group", "Blood Group", "select",
+                ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]],
+            ["phone", "Phone Number", "tel"]
+        ],
+        label: r => `${r.donor_id} — ${r.name} (${r.blood_group})`
+    },
+    "blood-stock": {
+        endpoint: "/blood-stock",
+        id: "stock_id",
+        fields: [
+            ["blood_group", "Blood Group", "select",
+                ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]],
+            ["units_available", "Units Available", "number"],
+            ["last_updated", "Last Updated", "date"]
+        ],
+        label: r => `${r.stock_id} — ${r.blood_group}: ${r.units_available} units`
+    },
+    "blood-requests": {
+        endpoint: "/blood-requests",
+        id: "request_id",
+        fields: [
+            ["hospital_name", "Hospital Name", "text"],
+            ["blood_group", "Blood Group", "select",
+                ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]],
+            ["units_required", "Units Required", "number"],
+            ["request_date", "Request Date", "date"],
+            ["status", "Request Status", "select",
+                ["Pending", "Approved", "Rejected", "Completed"]]
+        ],
+        label: r => `${r.request_id} — ${r.hospital_name} (${r.blood_group})`
+    }
+};
+
+const table = document.getElementById("table");
+const recordId = document.getElementById("recordId");
+const fields = document.getElementById("fields");
+const form = document.getElementById("recordForm");
+let records = [];
+
+function message(text, success = true) {
+    const box = document.getElementById("status");
+    box.textContent = text;
+    box.className = "status show " + (success ? "ok" : "err");
+}
+
+function getRows(data) {
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.data)) return data.data;
+    return [];
+}
+
+function renderFields(record = {}) {
+    fields.innerHTML = "";
+
+    schemas[table.value].fields.forEach(([name, label, type, options]) => {
+        const box = document.createElement("div");
+        box.className = "field";
+
+        const lab = document.createElement("label");
+        lab.htmlFor = name;
+        lab.textContent = label;
+
+        let input;
+
+        if (type === "select") {
+            input = document.createElement("select");
+            input.add(new Option("Select " + label, ""));
+            options.forEach(value => input.add(new Option(value, value)));
+        } else {
+            input = document.createElement("input");
+            input.type = type;
+            if (type === "number") input.min = "0";
+            if (type === "tel") input.maxLength = 15;
+        }
+
+        input.id = name;
+        input.name = name;
+        input.required = true;
+
+        let value = record[name] ?? "";
+
+        if (type === "date" && value) {
+            value = String(value).slice(0, 10);
+        }
+
+        input.value = value;
+        box.append(lab, input);
+        fields.appendChild(box);
+    });
+}
+
+async function loadRecords() {
+    const schema = schemas[table.value];
+
+    recordId.innerHTML = "";
+    recordId.add(new Option("Loading records...", ""));
+
+    try {
+        const response = await fetch(schema.endpoint);
+        if (!response.ok) throw new Error(await response.text());
+
+        records = getRows(await response.json());
+
+        recordId.innerHTML = "";
+        recordId.add(new Option("-- Select Record --", ""));
+
+        records.forEach(record => {
+            recordId.add(new Option(
+                schema.label(record),
+                record[schema.id]
+            ));
+        });
+
+        if (records.length === 0) {
+            recordId.add(new Option("No records found", ""));
+        }
+
+        renderFields();
+    } catch (error) {
+        recordId.innerHTML = "";
+        recordId.add(new Option("Unable to load records", ""));
+        renderFields();
+        message("Could not load database records: " + error.message, false);
+    }
+}
+
+table.addEventListener("change", loadRecords);
+
+recordId.addEventListener("change", () => {
+    const schema = schemas[table.value];
+    const record = records.find(
+        item => String(item[schema.id]) === recordId.value
+    );
+    renderFields(record || {});
+});
+
+document.getElementById("reload").addEventListener("click", loadRecords);
+
+form.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const schema = schemas[table.value];
+    const id = recordId.value;
+
+    if (!id) {
+        message("Please select a record first.", false);
+        return;
+    }
+
+    const data = {};
+    schema.fields.forEach(([name]) => {
+        data[name] = document.getElementById(name).value;
+    });
+
+    try {
+        const response = await fetch(
+            schema.endpoint + "/" + encodeURIComponent(id),
+            {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            }
+        );
+
+        const result = await response.text();
+        if (!response.ok) throw new Error(result);
+
+        message("Record updated successfully!");
+        await loadRecords();
+        recordId.value = id;
+
+        const updatedRecord = records.find(
+            item => String(item[schema.id]) === id
+        );
+        renderFields(updatedRecord || {});
+    } catch (error) {
+        message("Update failed: " + error.message, false);
+    }
+});
+
+loadRecords();
+</script>
+
+</body>
+</html>

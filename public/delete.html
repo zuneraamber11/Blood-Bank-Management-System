@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Record | Blood Bank</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+    <a class="brand" href="index.html">♥ Blood Bank
+        <small>MANAGEMENT SYSTEM</small>
+    </a>
+    <div class="navlinks">
+        <a href="index.html">Home</a>
+        <a href="insert.html">Add Record</a>
+        <a href="list.html">View Records</a>
+        <a href="listOne.html">Search</a>
+        <a href="update.html">Update</a>
+        <a href="delete.html">Delete</a>
+    </div>
+</nav>
+
+<main>
+    <section class="hero">
+        <div>
+            <div class="eyebrow">Keep your data organized</div>
+            <h1>Delete Record</h1>
+            <p>Select an existing donor, blood stock entry, or hospital request and remove it from the database.</p>
+        </div>
+        <img src="images/delete-banner.jpg" alt="Blood bank donation bag">
+    </section>
+
+    <section class="panel">
+        <h2>Remove a Record</h2>
+        <p class="hint">Please verify the selected record before confirming deletion.</p>
+
+        <form id="recordForm">
+            <div class="field">
+                <label for="table">Record Type</label>
+                <select id="table">
+                    <option value="donors">Donor</option>
+                    <option value="blood-stock">Blood Stock</option>
+                    <option value="blood-requests">Blood Request</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="recordId">Select Existing Record</label>
+                <select id="recordId" required>
+                    <option value="">Loading records...</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="preview">Selected Record Details</label>
+                <textarea id="preview" rows="4" readonly>No record selected</textarea>
+            </div>
+
+            <div class="actions">
+                <button class="btn danger" type="submit">⌫ Delete Record</button>
+                <button class="btn secondary" type="button" id="reload">Reload Records</button>
+            </div>
+
+            <div id="status" class="status"></div>
+        </form>
+    </section>
+</main>
+
+<footer class="footer">Blood Bank Management System · Because every drop counts</footer>
+
+<script>
+const schemas = {
+    donors: {
+        endpoint: "/donors",
+        id: "donor_id",
+        label: r => `${r.donor_id} — ${r.name} (${r.blood_group})`,
+        details: r =>
+            `Donor ID: ${r.donor_id}\n` +
+            `Name: ${r.name}\nAge: ${r.age}\n` +
+            `Gender: ${r.gender}\nBlood Group: ${r.blood_group}\n` +
+            `Phone: ${r.phone}`
+    },
+    "blood-stock": {
+        endpoint: "/blood-stock",
+        id: "stock_id",
+        label: r => `${r.stock_id} — ${r.blood_group}: ${r.units_available} units`,
+        details: r =>
+            `Stock ID: ${r.stock_id}\n` +
+            `Blood Group: ${r.blood_group}\n` +
+            `Units Available: ${r.units_available}\n` +
+            `Last Updated: ${String(r.last_updated).slice(0, 10)}`
+    },
+    "blood-requests": {
+        endpoint: "/blood-requests",
+        id: "request_id",
+        label: r => `${r.request_id} — ${r.hospital_name} (${r.blood_group})`,
+        details: r =>
+            `Request ID: ${r.request_id}\n` +
+            `Hospital: ${r.hospital_name}\n` +
+            `Blood Group: ${r.blood_group}\n` +
+            `Units Required: ${r.units_required}\n` +
+            `Request Date: ${String(r.request_date).slice(0, 10)}\n` +
+            `Status: ${r.status}`
+    }
+};
+
+const table = document.getElementById("table");
+const recordId = document.getElementById("recordId");
+const preview = document.getElementById("preview");
+const form = document.getElementById("recordForm");
+let records = [];
+
+function getRows(data) {
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.data)) return data.data;
+    return [];
+}
+
+function message(text, success = true) {
+    const box = document.getElementById("status");
+    box.textContent = text;
+    box.className = "status show " + (success ? "ok" : "err");
+}
+
+async function loadRecords() {
+    const schema = schemas[table.value];
+
+    recordId.innerHTML = "";
+    recordId.add(new Option("Loading records...", ""));
+    preview.value = "No record selected";
+
+    try {
+        const response = await fetch(schema.endpoint);
+        if (!response.ok) throw new Error(await response.text());
+
+        records = getRows(await response.json());
+
+        recordId.innerHTML = "";
+        recordId.add(new Option("-- Select Record --", ""));
+
+        records.forEach(record => {
+            recordId.add(new Option(
+                schema.label(record),
+                record[schema.id]
+            ));
+        });
+
+        if (records.length === 0) {
+            recordId.add(new Option("No records found", ""));
+        }
+    } catch (error) {
+        recordId.innerHTML = "";
+        recordId.add(new Option("Unable to load records", ""));
+        message("Could not load records: " + error.message, false);
+    }
+}
+
+table.addEventListener("change", loadRecords);
+
+recordId.addEventListener("change", () => {
+    const schema = schemas[table.value];
+
+    const record = records.find(
+        item => String(item[schema.id]) === recordId.value
+    );
+
+    preview.value = record
+        ? schema.details(record)
+        : "No record selected";
+});
+
+document.getElementById("reload").addEventListener("click", loadRecords);
+
+form.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const schema = schemas[table.value];
+    const id = recordId.value;
+
+    if (!id) {
+        message("Please select a record first.", false);
+        return;
+    }
+
+    const record = records.find(
+        item => String(item[schema.id]) === id
+    );
+
+    if (!record) {
+        message("Record not found. Reload the records.", false);
+        return;
+    }
+
+    if (!confirm(
+        "Are you sure you want to permanently delete this record?\n\n" +
+        schema.label(record)
+    )) {
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            schema.endpoint + "/" + encodeURIComponent(id),
+            { method: "DELETE" }
+        );
+
+        const result = await response.text();
+        if (!response.ok) throw new Error(result);
+
+        message("Record deleted successfully!");
+        await loadRecords();
+    } catch (error) {
+        message("Delete failed: " + error.message, false);
+    }
+});
+
+loadRecords();
+</script>
+
+</body>
+</html>

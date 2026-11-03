@@ -1,0 +1,337 @@
+
+/* =================================
+   BLOOD BANK MANAGEMENT SYSTEM
+   Offline CSS - No Internet Needed
+================================= */
+
+:root {
+    --red: #8b1725;
+    --light-red: #b52b3b;
+    --cream: #fff7f0;
+    --white: #ffffff;
+    --text: #302326;
+    --muted: #786a6d;
+    --border: #ead8d8;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg, #fff7f0, #f9e8e8);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+/* NAVIGATION BAR */
+
+.nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding: 20px 6%;
+    background: var(--white);
+    border-bottom: 2px solid var(--border);
+    box-shadow: 0 4px 18px rgba(70, 15, 25, 0.08);
+}
+
+.brand {
+    text-decoration: none;
+    color: var(--red);
+    font-family: Georgia, serif;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.brand small {
+    display: block;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-top: 4px;
+}
+
+.navlinks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+}
+
+.navlinks a {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.navlinks a:hover {
+    color: var(--light-red);
+}
+
+/* MAIN CONTENT */
+
+main {
+    max-width: 1100px;
+    margin: 35px auto;
+    padding: 0 22px 35px;
+}
+
+/* HERO SECTION */
+
+.hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.eyebrow {
+    color: var(--red);
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+h1 {
+    font-family: Georgia, serif;
+    font-size: clamp(32px, 4vw, 48px);
+    color: #401b22;
+    margin-bottom: 15px;
+}
+
+.hero p {
+    color: var(--muted);
+    line-height: 1.8;
+    font-size: 15px;
+}
+
+.hero img {
+    width: 100%;
+    height: 230px;
+    object-fit: cover;
+    border-radius: 18px;
+    border: 3px solid white;
+    box-shadow: 0 12px 30px rgba(80, 20, 30, 0.13);
+}
+
+/* FORM CARD */
+
+.panel {
+    max-width: 780px;
+    margin: auto;
+    padding: 32px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(80, 20, 30, 0.09);
+}
+
+.panel h2 {
+    font-family: Georgia, serif;
+    font-size: 27px;
+    color: var(--red);
+    margin-bottom: 10px;
+}
+
+.hint {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 25px;
+}
+
+/* FORM LAYOUT */
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.field.full {
+    grid-column: 1 / -1;
+}
+
+label {
+    font-size: 13px;
+    font-weight: bold;
+    color: #493438;
+}
+
+/* INPUTS AND DROPDOWNS */
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 13px 14px;
+    border: 1px solid #dfcccc;
+    border-radius: 10px;
+    background: #fffdfc;
+    color: var(--text);
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: 0.25s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--light-red);
+    box-shadow: 0 0 0 3px rgba(181, 43, 59, 0.12);
+}
+
+input[readonly] {
+    background: #f7eeee;
+    color: var(--muted);
+}
+
+select {
+    cursor: pointer;
+}
+
+/* BUTTONS */
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px 22px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    text-decoration: none;
+    cursor: pointer;
+    transition: 0.25s;
+}
+
+.primary {
+    background: linear-gradient(135deg, var(--red), var(--light-red));
+    color: white;
+    box-shadow: 0 6px 15px rgba(139, 23, 37, 0.2);
+}
+
+.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 9px 20px rgba(139, 23, 37, 0.25);
+}
+
+.secondary {
+    background: #f7e9e8;
+    color: var(--red);
+}
+
+.secondary:hover {
+    background: #f0d8d8;
+}
+
+.danger {
+    background: #9d1828;
+    color: white;
+}
+
+.danger:hover {
+    background: #74101d;
+    transform: translateY(-2px);
+}
+
+/* STATUS MESSAGE */
+
+.status {
+    display: none;
+    margin-top: 18px;
+    padding: 13px;
+    border-radius: 9px;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.status.show {
+    display: block;
+}
+
+.status.ok {
+    background: #e8f6ec;
+    color: #216438;
+}
+
+.status.err {
+    background: #ffeded;
+    color: #9d1828;
+}
+
+/* FOOTER */
+
+.footer {
+    padding: 25px 15px;
+    text-align: center;
+    color: #876e72;
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.55);
+}
+
+/* RESPONSIVE DESIGN */
+
+@media (max-width: 700px) {
+    .nav {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .navlinks {
+        gap: 14px;
+    }
+
+    .hero {
+        grid-template-columns: 1fr;
+    }
+
+    .hero img {
+        height: 190px;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .field.full {
+        grid-column: auto;
+    }
+
+    .panel {
+        padding: 22px;
+    }
+
+    main {
+        margin-top: 22px;
+    }
+}

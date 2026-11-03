@@ -1,0 +1,339 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Blood Bank Management System</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .welcome {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .banner {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            object-position: center;
+            border-radius: 18px;
+            border: 3px solid white;
+            box-shadow: 0 12px 30px #50141e20;
+        }
+
+        .welcome-text {
+            max-width: 760px;
+        }
+
+        .welcome-text p {
+            color: #786a6d;
+            font-size: 16px;
+            line-height: 1.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            padding: 25px;
+            background: #ffffff;
+            border: 1px solid #ead8d8;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px #50141e10;
+            transition: transform 0.25s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .stat-icon {
+            font-size: 30px;
+            margin-bottom: 14px;
+        }
+
+        .stat-card h3 {
+            color: #786a6d;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .stat-number {
+            color: #8b1725;
+            font-family: Georgia, serif;
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .section-heading {
+            font-family: Georgia, serif;
+            color: #401b22;
+            font-size: 28px;
+            margin: 35px 0 18px;
+        }
+
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .quick-link {
+            display: block;
+            padding: 22px;
+            text-decoration: none;
+            color: #302326;
+            background: white;
+            border: 1px solid #ead8d8;
+            border-radius: 14px;
+            transition: 0.25s;
+        }
+
+        .quick-link:hover {
+            border-color: #b52b3b;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px #50141e12;
+        }
+
+        .quick-link h3 {
+            color: #8b1725;
+            margin-bottom: 9px;
+            font-size: 17px;
+        }
+
+        .quick-link p {
+            color: #786a6d;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .notice {
+            margin-top: 28px;
+            padding: 22px;
+            background: #f7e9e8;
+            border-left: 5px solid #8b1725;
+            border-radius: 10px;
+            line-height: 1.8;
+            color: #56383d;
+        }
+
+        @media (max-width: 700px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-links {
+                grid-template-columns: 1fr;
+            }
+
+            .banner {
+                height: 190px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Navigation Bar -->
+<nav class="nav">
+    <a class="brand" href="index.html">
+        ♥ Blood Bank
+        <small>MANAGEMENT SYSTEM</small>
+    </a>
+
+    <div class="navlinks">
+        <a href="index.html">Home</a>
+        <a href="insert.html">Add Record</a>
+        <a href="list.html">View Records</a>
+        <a href="listOne.html">Search</a>
+        <a href="update.html">Update</a>
+        <a href="delete.html">Delete</a>
+    </div>
+</nav>
+
+<main>
+
+    <!-- Welcome Section -->
+    <section class="welcome">
+
+        <div class="welcome-text">
+            <div class="eyebrow">Give blood. Give hope.</div>
+
+            <h1>Blood Bank<br>Management System</h1>
+
+            <p>
+                A centralized system to manage blood donors,
+                monitor available blood stock, and organize
+                hospital blood requests efficiently.
+                Every donation can make a difference.
+            </p>
+
+            <div class="actions">
+                <a href="insert.html" class="btn primary"
+                   style="text-decoration:none">
+                    + Add New Record
+                </a>
+
+                <a href="list.html" class="btn secondary"
+                   style="text-decoration:none">
+                    View Records
+                </a>
+            </div>
+        </div>
+
+        <!-- One Horizontal Image -->
+        <img
+            src="images/index-banner.jpg"
+            alt="Blood donation and saving lives"
+            class="banner"
+        >
+
+    </section>
+
+    <!-- Dashboard Summary -->
+    <h2 class="section-heading">Dashboard Overview</h2>
+
+    <section class="dashboard">
+
+        <div class="stat-card">
+            <div class="stat-icon">♥</div>
+            <h3>Registered Donors</h3>
+            <div class="stat-number" id="donorCount">—</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">🩸</div>
+            <h3>Total Units Available</h3>
+            <div class="stat-number" id="stockCount">—</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">＋</div>
+            <h3>Blood Requests</h3>
+            <div class="stat-number" id="requestCount">—</div>
+        </div>
+
+    </section>
+
+    <!-- Quick Navigation -->
+    <h2 class="section-heading">Manage Your Blood Bank</h2>
+
+    <section class="quick-links">
+
+        <a href="insert.html" class="quick-link">
+            <h3>＋ Add Records</h3>
+            <p>
+                Register a donor, add blood stock information,
+                or record a hospital request.
+            </p>
+        </a>
+
+        <a href="list.html" class="quick-link">
+            <h3>▤ View All Records</h3>
+            <p>
+                Browse the records stored in your three
+                database tables.
+            </p>
+        </a>
+
+        <a href="listOne.html" class="quick-link">
+            <h3>⌕ Search a Record</h3>
+            <p>
+                Find a particular donor, blood stock entry,
+                or hospital request.
+            </p>
+        </a>
+
+        <a href="update.html" class="quick-link">
+            <h3>✎ Update Records</h3>
+            <p>
+                Select an existing record and modify
+                its information.
+            </p>
+        </a>
+
+        <a href="delete.html" class="quick-link">
+            <h3>⌫ Delete Records</h3>
+            <p>
+                Remove a selected record after
+                confirming the deletion.
+            </p>
+        </a>
+
+    </section>
+
+    <div class="notice">
+        <strong>Every Drop Counts!</strong><br>
+        Keep donor information accurate, maintain updated
+        stock records, and track hospital requests carefully.
+    </div>
+
+</main>
+
+<footer class="footer">
+    Blood Bank Management System | Give Blood, Save Lives
+</footer>
+
+<script>
+async function loadDashboard() {
+
+    const endpoints = [
+        { url: "/donors", id: "donorCount", type: "count" },
+        { url: "/blood-stock", id: "stockCount", type: "units" },
+        { url: "/blood-requests", id: "requestCount", type: "count" }
+    ];
+
+    for (const item of endpoints) {
+
+        const element = document.getElementById(item.id);
+
+        try {
+            const response = await fetch(item.url);
+
+            if (!response.ok) {
+                throw new Error("Unable to fetch records");
+            }
+
+            const data = await response.json();
+
+            const records = Array.isArray(data)
+                ? data
+                : Array.isArray(data.data)
+                    ? data.data
+                    : [];
+
+            let total;
+
+            if (item.type === "units") {
+                total = records.reduce(
+                    (sum, record) =>
+                        sum + (Number(record.units_available) || 0),
+                    0
+                );
+            } else {
+                total = records.length;
+            }
+
+            element.textContent = total;
+
+        } catch (error) {
+            element.textContent = "—";
+        }
+    }
+}
+
+loadDashboard();
+</script>
+
+</body>
+</html>

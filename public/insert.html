@@ -1,0 +1,269 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Record | Blood Bank</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- Navigation Bar -->
+<nav class="nav">
+    <a class="brand" href="index.html">
+        ♥ Blood Bank
+        <small>MANAGEMENT SYSTEM</small>
+    </a>
+
+    <div class="navlinks">
+        <a href="index.html">Home</a>
+        <a href="insert.html">Add Record</a>
+        <a href="list.html">View Records</a>
+        <a href="listOne.html">Search</a>
+        <a href="update.html">Update</a>
+        <a href="delete.html">Delete</a>
+    </div>
+</nav>
+
+<main>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div>
+            <div class="eyebrow">Every drop counts</div>
+            <h1>Add New Record</h1>
+            <p>
+                Register blood donors, manage available blood stock,
+                and record hospital blood requests easily.
+            </p>
+        </div>
+
+        <img src="images/insert-banner.jpg"
+             alt="Blood donation">
+    </section>
+
+    <!-- Insert Form -->
+    <section class="panel">
+
+        <h2>Create a Record</h2>
+        <p class="hint">
+            Select the record type and enter the required details.
+        </p>
+
+        <form id="recordForm">
+
+            <div class="field">
+                <label for="table">Select Record Type</label>
+
+                <select id="table">
+                    <option value="donors">Donor</option>
+                    <option value="blood-stock">Blood Stock</option>
+                    <option value="blood-requests">Blood Request</option>
+                </select>
+            </div>
+
+            <!-- Fields are generated using JavaScript -->
+            <div id="fields" class="grid"></div>
+
+            <div class="actions">
+                <button class="btn primary" type="submit">
+                    + Save Record
+                </button>
+
+                <button class="btn secondary" type="reset">
+                    Clear Form
+                </button>
+            </div>
+
+            <div id="status" class="status" role="status"></div>
+
+        </form>
+    </section>
+
+</main>
+
+<footer class="footer">
+    Blood Bank Management System | Because Every Drop Counts
+</footer>
+
+<script>
+
+// API details for all three database tables
+const schemas = {
+
+    donors: {
+        endpoint: "/donors",
+
+        fields: [
+            ["name", "Donor Name", "text"],
+            ["age", "Age", "number"],
+            ["gender", "Gender", "select",
+                ["Male", "Female", "Other"]],
+            ["blood_group", "Blood Group", "select",
+                ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]],
+            ["phone", "Phone Number", "tel"]
+        ]
+    },
+
+    "blood-stock": {
+        endpoint: "/blood-stock",
+
+        fields: [
+            ["blood_group", "Blood Group", "select",
+                ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]],
+            ["units_available", "Units Available", "number"],
+            ["last_updated", "Last Updated", "date"]
+        ]
+    },
+
+    "blood-requests": {
+        endpoint: "/blood-requests",
+
+        fields: [
+            ["hospital_name", "Hospital Name", "text"],
+            ["blood_group", "Blood Group", "select",
+                ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]],
+            ["units_required", "Units Required", "number"],
+            ["request_date", "Request Date", "date"],
+            ["status", "Request Status", "select",
+                ["Pending", "Approved", "Rejected", "Completed"]]
+        ]
+    }
+
+};
+
+const table = document.getElementById("table");
+const fields = document.getElementById("fields");
+const form = document.getElementById("recordForm");
+const statusBox = document.getElementById("status");
+
+// Display success or error messages
+function showMessage(message, success = true) {
+    statusBox.textContent = message;
+    statusBox.className =
+        "status show " + (success ? "ok" : "err");
+}
+
+// Generate the form fields
+function renderFields() {
+
+    fields.innerHTML = "";
+
+    const selectedSchema = schemas[table.value];
+
+    selectedSchema.fields.forEach(
+        ([name, label, type, options]) => {
+
+            const box = document.createElement("div");
+            box.className = "field";
+
+            const lab = document.createElement("label");
+            lab.htmlFor = name;
+            lab.textContent = label;
+
+            let input;
+
+            if (type === "select") {
+
+                input = document.createElement("select");
+
+                input.add(
+                    new Option("Select " + label, "")
+                );
+
+                options.forEach(option => {
+                    input.add(new Option(option, option));
+                });
+
+            } else {
+
+                input = document.createElement("input");
+                input.type = type;
+
+                if (type === "number") {
+                    input.min = "0";
+                }
+
+                if (type === "tel") {
+                    input.maxLength = 15;
+                }
+            }
+
+            input.id = name;
+            input.name = name;
+            input.required = true;
+
+            box.append(lab, input);
+            fields.appendChild(box);
+        }
+    );
+}
+
+// Change fields when the record type changes
+table.addEventListener("change", () => {
+    renderFields();
+    statusBox.className = "status";
+});
+
+// Clear the form and regenerate its fields
+form.addEventListener("reset", () => {
+    setTimeout(() => {
+        renderFields();
+        statusBox.className = "status";
+    }, 0);
+});
+
+// Insert record into MySQL through the backend
+form.addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    const schema = schemas[table.value];
+    const data = {};
+
+    schema.fields.forEach(([name]) => {
+        data[name] = document.getElementById(name).value;
+    });
+
+    try {
+
+        const response = await fetch(schema.endpoint, {
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.text();
+
+        if (!response.ok) {
+            throw new Error(result);
+        }
+
+        showMessage("Record inserted successfully!");
+
+        form.reset();
+
+    } catch (error) {
+
+        showMessage(
+            "Error inserting record: " + error.message,
+            false
+        );
+
+    }
+
+});
+
+// Load the initial form
+renderFields();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,304 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>View Records | Blood Bank</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 22px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid #ead8d8;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        th {
+            background: #8b1725;
+            color: white;
+        }
+
+        tbody tr:hover {
+            background: #fff3f0;
+        }
+
+        .count {
+            color: #8b1725;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .table-select {
+            max-width: 350px;
+        }
+
+        .loading {
+            color: #786a6d;
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+    <a class="brand" href="index.html">
+        ♥ Blood Bank
+        <small>MANAGEMENT SYSTEM</small>
+    </a>
+
+    <div class="navlinks">
+        <a href="index.html">Home</a>
+        <a href="insert.html">Add Record</a>
+        <a href="list.html">View Records</a>
+        <a href="listOne.html">Search</a>
+        <a href="update.html">Update</a>
+        <a href="delete.html">Delete</a>
+    </div>
+</nav>
+
+<main>
+
+    <!-- Heading and One Image -->
+    <section class="hero">
+        <div>
+            <div class="eyebrow">Blood bank database</div>
+
+            <h1>View Records</h1>
+
+            <p>
+                View donor information, available blood stock,
+                and hospital blood requests directly from
+                your database.
+            </p>
+        </div>
+
+        <img
+            src="images/list-banner.jpg"
+            alt="Blood donation and medical care"
+        >
+    </section>
+
+    <!-- Records Section -->
+    <section class="panel">
+
+        <h2>Database Records</h2>
+
+        <p class="hint">
+            Select a table below to view its current records.
+        </p>
+
+        <div class="field">
+            <label for="table">Select Record Type</label>
+
+            <select id="table" class="table-select">
+                <option value="donors">Donors</option>
+                <option value="blood-stock">Blood Stock</option>
+                <option value="blood-requests">Blood Requests</option>
+            </select>
+        </div>
+
+        <div id="status" class="status" role="status"></div>
+
+        <p id="count" class="count">Total Records: 0</p>
+
+        <div class="table-wrapper">
+            <table>
+                <thead id="tableHead"></thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td class="loading">Loading records...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="actions">
+            <button class="btn primary" id="refresh" type="button">
+                ↻ Refresh Records
+            </button>
+        </div>
+
+    </section>
+
+</main>
+
+<footer class="footer">
+    Blood Bank Management System | Because Every Drop Counts
+</footer>
+
+<script>
+const schemas = {
+    donors: {
+        endpoint: "/donors",
+        columns: [
+            ["donor_id", "Donor ID"],
+            ["name", "Name"],
+            ["age", "Age"],
+            ["gender", "Gender"],
+            ["blood_group", "Blood Group"],
+            ["phone", "Phone"]
+        ]
+    },
+
+    "blood-stock": {
+        endpoint: "/blood-stock",
+        columns: [
+            ["stock_id", "Stock ID"],
+            ["blood_group", "Blood Group"],
+            ["units_available", "Units Available"],
+            ["last_updated", "Last Updated"]
+        ]
+    },
+
+    "blood-requests": {
+        endpoint: "/blood-requests",
+        columns: [
+            ["request_id", "Request ID"],
+            ["hospital_name", "Hospital Name"],
+            ["blood_group", "Blood Group"],
+            ["units_required", "Units Required"],
+            ["request_date", "Request Date"],
+            ["status", "Status"]
+        ]
+    }
+};
+
+const tableSelect = document.getElementById("table");
+const tableHead = document.getElementById("tableHead");
+const tableBody = document.getElementById("tableBody");
+const count = document.getElementById("count");
+const statusBox = document.getElementById("status");
+
+function showMessage(message, success = false) {
+    statusBox.textContent = message;
+    statusBox.className =
+        "status show " + (success ? "ok" : "err");
+}
+
+function getRows(data) {
+    if (Array.isArray(data)) return data;
+
+    if (data && Array.isArray(data.data)) {
+        return data.data;
+    }
+
+    return [];
+}
+
+async function loadRecords() {
+    const schema = schemas[tableSelect.value];
+
+    tableHead.innerHTML = "";
+    tableBody.innerHTML = "";
+    count.textContent = "Loading records...";
+    statusBox.className = "status";
+
+    try {
+        const response = await fetch(schema.endpoint);
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+
+        const data = await response.json();
+        const records = getRows(data);
+
+        // Create table headings
+        const headerRow = document.createElement("tr");
+
+        schema.columns.forEach(([key, label]) => {
+            const th = document.createElement("th");
+            th.textContent = label;
+            headerRow.appendChild(th);
+        });
+
+        tableHead.appendChild(headerRow);
+
+        // Show an empty message when no records exist
+        if (records.length === 0) {
+            const row = document.createElement("tr");
+            const cell = document.createElement("td");
+
+            cell.colSpan = schema.columns.length;
+            cell.textContent = "No records found in the database.";
+            cell.className = "loading";
+
+            row.appendChild(cell);
+            tableBody.appendChild(row);
+        } else {
+            // Display database records
+            records.forEach(record => {
+                const row = document.createElement("tr");
+
+                schema.columns.forEach(([key]) => {
+                    const cell = document.createElement("td");
+
+                    let value = record[key] ?? "";
+
+                    if (
+                        value &&
+                        (key === "last_updated" ||
+                         key === "request_date")
+                    ) {
+                        value = String(value).slice(0, 10);
+                    }
+
+                    cell.textContent = value;
+                    row.appendChild(cell);
+                });
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        count.textContent = "Total Records: " + records.length;
+        showMessage("Records loaded successfully.", true);
+
+    } catch (error) {
+        tableBody.innerHTML = "";
+
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+
+        cell.colSpan = schema.columns.length;
+        cell.textContent = "Unable to load records. Check your server and database.";
+        row.appendChild(cell);
+        tableBody.appendChild(row);
+
+        count.textContent = "Total Records: 0";
+
+        showMessage("Error: " + error.message, false);
+    }
+}
+
+tableSelect.addEventListener("change", loadRecords);
+
+document.getElementById("refresh").addEventListener(
+    "click",
+    loadRecords
+);
+
+loadRecords();
+</script>
+
+</body>
+</html>

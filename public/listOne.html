@@ -1,0 +1,375 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Search Record | Blood Bank</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .search-image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            object-position: center;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            border: 3px solid white;
+            box-shadow: 0 8px 25px #50141e20;
+        }
+
+        .record-details {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 15px;
+            margin-top: 22px;
+        }
+
+        .detail-card {
+            background: #fff7f3;
+            border: 1px solid #ead8d8;
+            border-radius: 12px;
+            padding: 16px;
+            overflow-wrap: anywhere;
+        }
+
+        .detail-card span {
+            display: block;
+            font-size: 12px;
+            color: #786a6d;
+            margin-bottom: 8px;
+        }
+
+        .detail-card strong {
+            color: #8b1725;
+            font-size: 16px;
+        }
+
+        .search-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .search-form .field {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 600px) {
+            .record-details,
+            .search-form {
+                grid-template-columns: 1fr;
+            }
+
+            .search-image {
+                height: 160px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Navigation Bar -->
+<nav class="nav">
+    <a class="brand" href="index.html">
+        ♥ Blood Bank
+        <small>MANAGEMENT SYSTEM</small>
+    </a>
+
+    <div class="navlinks">
+        <a href="index.html">Home</a>
+        <a href="insert.html">Add Record</a>
+        <a href="list.html">View Records</a>
+        <a href="listOne.html">Search</a>
+        <a href="update.html">Update</a>
+        <a href="delete.html">Delete</a>
+    </div>
+</nav>
+
+<main>
+
+    <!-- Page Heading -->
+    <section class="hero">
+        <div>
+            <div class="eyebrow">Find records easily</div>
+            <h1>Search a Record</h1>
+            <p>
+                Select a record category and choose an existing
+                database record to view its complete details.
+            </p>
+        </div>
+    </section>
+
+    <!-- One Horizontal Image -->
+    <img
+        src="images/listOne-banner.jpg"
+        alt="Blood bank and donation"
+        class="search-image"
+    >
+
+    <!-- Search Section -->
+    <section class="panel">
+
+        <h2>Find Record Details</h2>
+
+        <p class="hint">
+            The dropdown options are loaded directly from your
+            MySQL database using the Node.js backend.
+        </p>
+
+        <div class="search-form">
+
+            <div class="field">
+                <label for="table">Select Record Type</label>
+
+                <select id="table">
+                    <option value="donors">Donors</option>
+                    <option value="blood-stock">Blood Stock</option>
+                    <option value="blood-requests">Blood Requests</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="recordId">Select Existing Record</label>
+
+                <select id="recordId">
+                    <option value="">Loading records...</option>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="actions">
+            <button class="btn primary" id="searchBtn" type="button">
+                Search Record
+            </button>
+
+            <button class="btn secondary" id="reloadBtn" type="button">
+                Reload Dropdown
+            </button>
+        </div>
+
+        <div id="status" class="status" role="status"></div>
+
+        <!-- Selected Record Details -->
+        <div id="result" class="record-details"></div>
+
+    </section>
+
+</main>
+
+<footer class="footer">
+    Blood Bank Management System | Because Every Drop Counts
+</footer>
+
+<script>
+const schemas = {
+    donors: {
+        endpoint: "/donors",
+        id: "donor_id",
+        fields: [
+            ["donor_id", "Donor ID"],
+            ["name", "Donor Name"],
+            ["age", "Age"],
+            ["gender", "Gender"],
+            ["blood_group", "Blood Group"],
+            ["phone", "Phone Number"]
+        ],
+        label: r =>
+            `${r.donor_id} - ${r.name} (${r.blood_group})`
+    },
+
+    "blood-stock": {
+        endpoint: "/blood-stock",
+        id: "stock_id",
+        fields: [
+            ["stock_id", "Stock ID"],
+            ["blood_group", "Blood Group"],
+            ["units_available", "Units Available"],
+            ["last_updated", "Last Updated"]
+        ],
+        label: r =>
+            `${r.stock_id} - ${r.blood_group} (${r.units_available} units)`
+    },
+
+    "blood-requests": {
+        endpoint: "/blood-requests",
+        id: "request_id",
+        fields: [
+            ["request_id", "Request ID"],
+            ["hospital_name", "Hospital Name"],
+            ["blood_group", "Blood Group"],
+            ["units_required", "Units Required"],
+            ["request_date", "Request Date"],
+            ["status", "Request Status"]
+        ],
+        label: r =>
+            `${r.request_id} - ${r.hospital_name} (${r.blood_group})`
+    }
+};
+
+const tableSelect = document.getElementById("table");
+const recordSelect = document.getElementById("recordId");
+const result = document.getElementById("result");
+const statusBox = document.getElementById("status");
+
+function showMessage(message, success = true) {
+    statusBox.textContent = message;
+    statusBox.className =
+        "status show " + (success ? "ok" : "err");
+}
+
+function getRows(data) {
+    if (Array.isArray(data)) return data;
+
+    if (data && Array.isArray(data.data)) {
+        return data.data;
+    }
+
+    return [];
+}
+
+// Load existing records into the dropdown
+async function loadRecords() {
+    const schema = schemas[tableSelect.value];
+
+    recordSelect.innerHTML = "";
+    recordSelect.add(new Option("Loading records...", ""));
+
+    result.innerHTML = "";
+    statusBox.className = "status";
+
+    try {
+        const response = await fetch(schema.endpoint);
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+
+        const data = await response.json();
+        const records = getRows(data);
+
+        recordSelect.innerHTML = "";
+        recordSelect.add(new Option("-- Select a Record --", ""));
+
+        records.forEach(record => {
+            recordSelect.add(
+                new Option(
+                    schema.label(record),
+                    record[schema.id]
+                )
+            );
+        });
+
+        if (records.length === 0) {
+            recordSelect.add(
+                new Option("No records available", "")
+            );
+
+            showMessage(
+                "No records found in this database table.",
+                false
+            );
+        } else {
+            showMessage(
+                records.length + " record(s) loaded successfully."
+            );
+        }
+
+    } catch (error) {
+        recordSelect.innerHTML = "";
+        recordSelect.add(
+            new Option("Unable to load records", "")
+        );
+
+        showMessage(
+            "Could not load records. Check your server and database. " +
+            error.message,
+            false
+        );
+    }
+}
+
+// Display one selected record
+async function searchRecord() {
+    const schema = schemas[tableSelect.value];
+    const id = recordSelect.value;
+
+    result.innerHTML = "";
+
+    if (!id) {
+        showMessage("Please select a record first.", false);
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            schema.endpoint + "/" + encodeURIComponent(id)
+        );
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+
+        const data = await response.json();
+
+        // The backend returns one record as an object.
+        // This also handles an array response if needed.
+        const record = Array.isArray(data) ? data[0] : data;
+
+        if (!record || Array.isArray(record.data)) {
+            throw new Error("Record not found.");
+        }
+
+        schema.fields.forEach(([key, label]) => {
+            const card = document.createElement("div");
+            card.className = "detail-card";
+
+            const name = document.createElement("span");
+            name.textContent = label;
+
+            const value = document.createElement("strong");
+            let displayValue = record[key] ?? "Not available";
+
+            if (
+                displayValue !== "Not available" &&
+                (key === "last_updated" || key === "request_date")
+            ) {
+                displayValue = String(displayValue).slice(0, 10);
+            }
+
+            value.textContent = displayValue;
+
+            card.append(name, value);
+            result.appendChild(card);
+        });
+
+        showMessage("Record found successfully.");
+
+    } catch (error) {
+        showMessage("Search failed: " + error.message, false);
+    }
+}
+
+tableSelect.addEventListener("change", loadRecords);
+
+document.getElementById("searchBtn").addEventListener(
+    "click",
+    searchRecord
+);
+
+document.getElementById("reloadBtn").addEventListener(
+    "click",
+    loadRecords
+);
+
+// Load dropdown when the page opens
+loadRecords();
+</script>
+
+</body>
+</html>
